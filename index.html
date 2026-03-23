@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Cubo Branco 3x3x3 - Gire com o Mouse</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        
+        .info {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-family: Arial, sans-serif;
+            pointer-events: none;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div class="info">
+        🖱️ Clique e arraste para girar o cubo
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // Criar a cena
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x222222);
+
+        // Criar a câmera
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(4, 3, 5);
+        camera.lookAt(0, 0, 0);
+
+        // Criar o renderizador
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Controles: girar ao segurar o mouse
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableZoom = false;      // Desativa zoom para manter simples
+        controls.enablePan = false;       // Desativa pan
+        controls.rotateSpeed = 1.2;
+        controls.target.set(0, 0, 0);
+
+        // Iluminação básica para enxergar o branco
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(2, 3, 2);
+        scene.add(directionalLight);
+        
+        const backLight = new THREE.DirectionalLight(0xffffff, 0.4);
+        backLight.position.set(-2, 1, -2);
+        scene.add(backLight);
+
+        // Função para criar um cubinho branco
+        function createCubie(x, y, z) {
+            const size = 0.94; // Pequeno espaço entre os cubos
+            const geometry = new THREE.BoxGeometry(size, size, size);
+            const material = new THREE.MeshStandardMaterial({
+                color: 0xffffff,
+                roughness: 0.5,
+                metalness: 0.0
+            });
+            const cube = new THREE.Mesh(geometry, material);
+            cube.position.set(x, y, z);
+            cube.castShadow = true;
+            return cube;
+        }
+
+        // Criar o grupo principal
+        const cuboGrupo = new THREE.Group();
+
+        // Posições: -1, 0, 1 (total 27 cubos)
+        const posicoes = [-1, 0, 1];
+
+        for (const x of posicoes) {
+            for (const y of posicoes) {
+                for (const z of posicoes) {
+                    const cubie = createCubie(x, y, z);
+                    cuboGrupo.add(cubie);
+                }
+            }
+        }
+
+        scene.add(cuboGrupo);
+
+        // Adicionar linhas simples de borda (opcional, para destacar os cubos)
+        // Isso ajuda a visualizar os 27 cubos individuais
+        const edgesGeometry = new THREE.BoxGeometry(0.94, 0.94, 0.94);
+        const edgesMaterial = new THREE.LineBasicMaterial({ color: 0x333333 });
+        
+        for (const x of posicoes) {
+            for (const y of posicoes) {
+                for (const z of posicoes) {
+                    const wireframe = new THREE.LineSegments(new THREE.EdgesGeometry(edgesGeometry), edgesMaterial);
+                    wireframe.position.set(x, y, z);
+                    cuboGrupo.add(wireframe);
+                }
+            }
+        }
+
+        // Função de animação
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update(); // Atualiza a rotação baseada no mouse
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Ajustar tamanho da janela
+        window.addEventListener('resize', onWindowResize, false);
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+    </script>
+</body>
+</html>
